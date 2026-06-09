@@ -1,0 +1,385 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: Date proposal app API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: links
+    description: Date proposal link management
+  - name: admin
+    description: Admin operations
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /links:
+    get:
+      operationId: listLinks
+      tags: [links]
+      summary: List all date links (admin)
+      responses:
+        "200":
+          description: List of links
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DateLink"
+    post:
+      operationId: createLink
+      tags: [links]
+      summary: Create a new date proposal link (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DateLinkInput"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DateLink"
+
+  /links/{linkId}:
+    get:
+      operationId: getLink
+      tags: [links]
+      summary: Get link details (public)
+      parameters:
+        - name: linkId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Link details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DateLink"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      operationId: deleteLink
+      tags: [links]
+      summary: Delete a link (admin)
+      parameters:
+        - name: linkId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /links/{linkId}/visit:
+    post:
+      operationId: recordVisit
+      tags: [links]
+      summary: Record a link visit
+      parameters:
+        - name: linkId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VisitInput"
+      responses:
+        "201":
+          description: Visit recorded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Visit"
+
+  /links/{linkId}/confirm:
+    post:
+      operationId: confirmDate
+      tags: [links]
+      summary: Confirm a date booking
+      parameters:
+        - name: linkId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BookingInput"
+      responses:
+        "201":
+          description: Booking confirmed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Booking"
+
+  /links/{linkId}/bookings:
+    get:
+      operationId: getLinkBookings
+      tags: [links]
+      summary: Get bookings for a link (admin)
+      parameters:
+        - name: linkId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Bookings list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+
+  /links/{linkId}/visits:
+    get:
+      operationId: getLinkVisits
+      tags: [links]
+      summary: Get visits for a link (admin)
+      parameters:
+        - name: linkId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Visits list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Visit"
+
+  /stats:
+    get:
+      operationId: getStats
+      tags: [admin]
+      summary: Overall stats (admin)
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stats"
+
+  /admin/login:
+    post:
+      operationId: adminLogin
+      tags: [admin]
+      summary: Admin login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AdminLoginInput"
+      responses:
+        "200":
+          description: Login success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminLoginResult"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    DateLink:
+      type: object
+      properties:
+        id:
+          type: string
+        customMessage:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        visitCount:
+          type: integer
+        yesCount:
+          type: integer
+      required:
+        - id
+        - createdAt
+        - visitCount
+        - yesCount
+
+    DateLinkInput:
+      type: object
+      properties:
+        customMessage:
+          type: string
+
+    Visit:
+      type: object
+      properties:
+        id:
+          type: integer
+        linkId:
+          type: string
+        ip:
+          type: ["string", "null"]
+        city:
+          type: ["string", "null"]
+        country:
+          type: ["string", "null"]
+        userAgent:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+      required:
+        - id
+        - linkId
+        - createdAt
+
+    VisitInput:
+      type: object
+      properties:
+        userAgent:
+          type: string
+
+    Booking:
+      type: object
+      properties:
+        id:
+          type: integer
+        linkId:
+          type: string
+        dateType:
+          type: string
+        customDateType:
+          type: ["string", "null"]
+        date:
+          type: string
+        time:
+          type: string
+        confirmedAt:
+          type: string
+      required:
+        - id
+        - linkId
+        - dateType
+        - date
+        - time
+        - confirmedAt
+
+    BookingInput:
+      type: object
+      properties:
+        dateType:
+          type: string
+        customDateType:
+          type: string
+        date:
+          type: string
+        time:
+          type: string
+      required:
+        - dateType
+        - date
+        - time
+
+    Stats:
+      type: object
+      properties:
+        totalLinks:
+          type: integer
+        totalVisits:
+          type: integer
+        totalBookings:
+          type: integer
+      required:
+        - totalLinks
+        - totalVisits
+        - totalBookings
+
+    AdminLoginInput:
+      type: object
+      properties:
+        password:
+          type: string
+      required:
+        - password
+
+    AdminLoginResult:
+      type: object
+      properties:
+        success:
+          type: boolean
+        token:
+          type: string
+      required:
+        - success
+        - token
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+      required:
+        - success
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
